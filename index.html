@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Numerology Mandala Generator</title>
+    <!-- Include p5.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <!-- Include Montserrat Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Styles for the Mandala Generator */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fdfdfd;
+        }
+        #mandala-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+        #mandala-container h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        #mandala-form input {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+            width: 200px;
+        }
+        #mandala-form button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #FFC107;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #mandala-form button:hover {
+            background-color: #FFB300;
+        }
+        #mandala-canvas {
+            margin-top: 20px;
+            display: inline-block;
+        }
+        #mandala-description {
+            margin-top: 20px;
+            font-size: 18px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="mandala-container">
+        <h2>Discover Your Personal Numerology Mandala</h2>
+        <form id="mandala-form">
+            <input type="text" id="fullName" placeholder="Enter your full name" required>
+            <input type="date" id="birthDate" required>
+            <button type="submit">Generate Mandala</button>
+        </form>
+        <div id="mandala-canvas"></div>
+        <div id="mandala-description"></div>
+    </div>
+    <script>
+        // Numerology Mandala Generator Script
+
+        // Function to calculate numerology numbers
+        function calculateNumerology(name, birthDate) {
+            // Calculate Expression Number (Name Number)
+            const letters = name.replace(/[^A-Za-z]/g, '').toUpperCase().split('');
+            const letterValues = letters.map(letter => {
+                const num = letter.charCodeAt(0) - 64; // A=1, B=2, ..., Z=26
+                return reduceToSingleDigit(num);
+            });
+            const expressionNumber = reduceToSingleDigit(letterValues.reduce((sum, num) => sum + num, 0));
+
+            // Calculate Life Path Number
+            const birthNumbers = birthDate.replace(/-/g, '').split('');
+            const lifePathNumber = reduceToSingleDigit(birthNumbers.reduce((sum, num) => sum + parseInt(num), 0));
+
+            return { expressionNumber, lifePathNumber };
+        }
+
+        function reduceToSingleDigit(number) {
+            while (number > 9 && number !== 11 && number !== 22 && number !== 33) {
+                number = number.toString().split('').reduce((sum, num) => sum + parseInt(num), 0);
+            }
+            return number;
+        }
+
+        // p5.js sketch
+        function createMandala(expressionNumber, lifePathNumber) {
+            let canvasDiv = document.getElementById('mandala-canvas');
+            canvasDiv.innerHTML = ''; // Clear previous canvas
+
+            let sketch = function(p) {
+                p.setup = function() {
+                    let canvas = p.createCanvas(400, 400);
+                    canvas.parent('mandala-canvas');
+                    p.angleMode(p.DEGREES);
+                    p.noLoop();
+                };
+
+                p.draw = function() {
+                    p.background(255);
+                    p.translate(p.width / 2, p.height / 2);
+
+                    // Use numerology numbers to influence mandala design
+                    let layers = expressionNumber + 3;
+                    let petals = lifePathNumber * 2 + 6;
+                    let colors = ['#FFD700', '#FFC107', '#FF8C00', '#FF4500'];
+
+                    for (let i = layers; i > 0; i--) {
+                        p.fill(colors[i % colors.length]);
+                        p.beginShape();
+                        for (let angle = 0; angle < 360; angle += 360 / petals) {
+                            let rad = i * 20;
+                            let x = rad * p.cos(angle);
+                            let y = rad * p.sin(angle);
+                            p.vertex(x, y);
+                        }
+                        p.endShape(p.CLOSE);
+                    }
+                };
+            };
+
+            new p5(sketch);
+        }
+
+        // Handle form submission
+        document.getElementById('mandala-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            let fullName = document.getElementById('fullName').value.trim();
+            let birthDate = document.getElementById('birthDate').value;
+
+            if (fullName && birthDate) {
+                let { expressionNumber, lifePathNumber } = calculateNumerology(fullName, birthDate);
+                createMandala(expressionNumber, lifePathNumber);
+
+                let description = `Your Expression Number is ${expressionNumber} and your Life Path Number is ${lifePathNumber}.`;
+                document.getElementById('mandala-description').innerText = description;
+            }
+        });
+    </script>
+</body>
+</html>
